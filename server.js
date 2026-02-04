@@ -46,26 +46,6 @@ function parseJsonFromText(text) {
   }
 }
 
-function buildFallback({ market, symbol, risk, horizon, strongPick }) {
-  const label = strongPick ? "Top candidate" : "Requested asset";
-  const subject = symbol || (market === "crypto" ? "BTC" : "NVDA");
-  return {
-    thesis:
-      `${label}: ${subject}. The agent favors ${risk} exposure over ${horizon}. ` +
-      "Momentum looks constructive, but entries should be staged with disciplined exits.",
-    signals: [
-      "News tone: cautiously bullish",
-      "Volume shift: +8% vs 30-day average",
-      "Macro correlation: moderating",
-      "Liquidity: stable across top venues",
-    ],
-    risks:
-      "Primary risks include volatility spikes, macro headline shocks, and liquidity gaps. Use position sizing and clear stop levels.",
-    allocation:
-      "Paper trade suggestion: 3 staged entries (40% / 35% / 25%) with a 7% protective stop and a 18% target ladder.",
-  };
-}
-
 async function callOpenRouter({ market, symbol, risk, horizon, strongPick }) {
   if (!OPENROUTER_API_KEY) {
     throw new Error("Missing OPENROUTER_API_KEY");
@@ -75,7 +55,8 @@ async function callOpenRouter({ market, symbol, risk, horizon, strongPick }) {
   const prompt =
     `You are a market research agent. Provide a concise research summary for ${topic}.\n` +
     `Market: ${market}. Risk profile: ${risk}. Horizon: ${horizon}.\n` +
-    "Return JSON only with keys: thesis (string), signals (array of strings), risks (string), allocation (string). " +
+    "If the user did not provide a symbol, choose a strong candidate and include its name or symbol in asset.\n" +
+    "Return JSON only with keys: asset (string), thesis (string), signals (array of strings), risks (string), allocation (string). " +
     "Do not give financial advice or trade execution steps. Emphasize risk management.";
 
   const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -107,11 +88,16 @@ async function callOpenRouter({ market, symbol, risk, horizon, strongPick }) {
 
   if (!parsed) {
     return {
+      asset: symbol || "",
       thesis: safeTrim(content) || "No thesis returned.",
       signals: ["Unable to parse signals from model response."],
       risks: "Unable to parse risks from model response.",
       allocation: "Unable to parse allocation from model response.",
     };
+  }
+
+  if (!parsed.asset) {
+    parsed.asset = symbol || "";
   }
 
   return parsed;
@@ -124,8 +110,60 @@ app.post("/api/research", async (req, res) => {
     const result = await callOpenRouter({ market, symbol, risk, horizon, strongPick });
     res.json({ ok: true, result });
   } catch (err) {
-    const fallback = buildFallback({ market, symbol, risk, horizon, strongPick });
-    res.status(200).json({ ok: false, fallback, error: err.message });
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+app.post("/api/chat", async (req, res) => {
+  const { messages, market, symbol } = req.body || {};
+
+  if (!OPENROUTER_API_KEY) {
+    res.status(500).json({ ok: false, error: "Missing OPENROUTER_API_KEY" });
+    return;
+  }
+
+  const safeMessages = Array.isArray(messages)
+    ? messages
+        .filter((item) => item && typeof item.content === "string" && typeof item.role === "string")
+        .slice(-12)
+    : [];
+
+  const systemPrompt =
+    "You are a market research assistant. Avoid financial advice or trade execution steps. " +
+    "Keep responses concise, risk-aware, and explain reasoning.";
+
+  const context = `Market: ${market || "unknown"}. Symbol/topic: ${symbol || "not specified"}.`;
+
+  try {
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+        "HTTP-Referer": "http://localhost",
+        "X-Title": "StackSkies Market Agent",
+      },
+      body: JSON.stringify({
+        model: "openai/gpt-4o-mini",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "system", content: context },
+          ...safeMessages,
+        ],
+        temperature: 0.5,
+      }),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`OpenRouter request failed: ${response.status} ${errText}`);
+    }
+
+    const data = await response.json();
+    const content = data?.choices?.[0]?.message?.content || "";
+    res.json({ ok: true, message: safeTrim(content) || "No response received." });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
   }
 });
 

@@ -6,29 +6,16 @@ const signalsEl = document.getElementById("signals");
 const riskEl = document.getElementById("risk-card");
 const allocationEl = document.getElementById("allocation");
 const marketSelect = document.getElementById("market");
+const assetNameEl = document.getElementById("asset-name");
+const chatWindow = document.getElementById("chat-window");
+const chatForm = document.getElementById("chat-form");
+const chatInput = document.getElementById("chat-input");
 
-const demoSignals = [
-  "News tone: cautiously bullish",
-  "Volume shift: +8% vs 30-day average",
-  "Macro correlation: moderating",
-  "Liquidity: stable across top venues",
-];
-
-const demoNews = [
+const chatHistory = [
   {
-    title: "Macro sentiment shifts toward risk-on",
-    body: "Demo headline. Connect to crypto & equities news feeds for live coverage.",
-    source: "StackSkies",
-  },
-  {
-    title: "Order-book liquidity holds above 30-day average",
-    body: "Demo headline. Swap in on-chain analytics or exchange data.",
-    source: "StackSkies",
-  },
-  {
-    title: "Institutional inflows highlight sector rotation",
-    body: "Demo headline. Replace with market news or earnings briefs.",
-    source: "StackSkies",
+    role: "assistant",
+    content:
+      "Hi! Tell me which market or symbol you want to explore, and I will summarize the latest signals.",
   },
 ];
 
@@ -37,10 +24,14 @@ function setStatus(text, busy = false) {
   statusEl.classList.toggle("busy", busy);
 }
 
+function setAssetName(text) {
+  assetNameEl.textContent = text || "--";
+}
+
 function renderSignals(signals) {
   const list = signalsEl.querySelector(".signal-list");
   list.innerHTML = "";
-  signals.forEach((item) => {
+  (signals || []).forEach((item) => {
     const li = document.createElement("li");
     li.textContent = item;
     list.appendChild(li);
@@ -88,19 +79,14 @@ function renderNews(items) {
   });
 }
 
-function buildFallback({ market, symbol, risk, horizon, strongPick }) {
-  const label = strongPick ? "Top candidate" : "Requested asset";
-  const subject = symbol || (market === "crypto" ? "BTC" : "NVDA");
-  return {
-    thesis:
-      `${label}: ${subject}. The agent favors balanced exposure with a ${risk} risk stance over ${horizon}. ` +
-      "Momentum remains positive, but entries should be staged and protected with clear exit criteria.",
-    signals: demoSignals,
-    risks:
-      "Primary risks include volatility spikes, macro headline shocks, and liquidity gaps. Use position sizing and clear stop levels.",
-    allocation:
-      "Paper trade suggestion: 3 staged entries (40% / 35% / 25%) with a 7% protective stop and a 18% target ladder.",
-  };
+function renderNewsPlaceholder(title, detail) {
+  renderNews([
+    {
+      title,
+      body: detail,
+      source: "StackSkies",
+    },
+  ]);
 }
 
 async function requestResearch(payload) {
@@ -110,11 +96,39 @@ async function requestResearch(payload) {
     body: JSON.stringify(payload),
   });
 
-  if (!response.ok) {
-    throw new Error("Research request failed");
+  let data = {};
+  try {
+    data = await response.json();
+  } catch (err) {
+    data = {};
   }
 
-  return response.json();
+  if (!response.ok || !data.ok) {
+    throw new Error(data.error || "Research request failed");
+  }
+
+  return data.result;
+}
+
+async function requestChat(messages, market, symbol) {
+  const response = await fetch("/api/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ messages, market, symbol }),
+  });
+
+  let data = {};
+  try {
+    data = await response.json();
+  } catch (err) {
+    data = {};
+  }
+
+  if (!response.ok || !data.ok) {
+    throw new Error(data.error || "Chat request failed");
+  }
+
+  return data.message;
 }
 
 async function loadNews(market) {
@@ -127,10 +141,10 @@ async function loadNews(market) {
     if (data.ok && data.items?.length) {
       renderNews(data.items);
     } else {
-      renderNews(demoNews);
+      renderNewsPlaceholder("No live headlines yet", "Try again in a moment.");
     }
   } catch (err) {
-    renderNews(demoNews);
+    renderNewsPlaceholder("Live news unavailable", "Check your connection or RSS access.");
   }
 }
 
@@ -143,15 +157,13 @@ async function runResearch({ strongPick }) {
   setStatus("Researching...", true);
 
   try {
-    const data = await requestResearch({ market, symbol, risk, horizon, strongPick });
-    const result = data.ok ? data.result : data.fallback;
+    const result = await requestResearch({ market, symbol, risk, horizon, strongPick });
 
-    if (!result) {
-      throw new Error("No result returned");
-    }
+    const assetName = result.asset || symbol || (market === "crypto" ? "Crypto" : "Stockmarket");
+    setAssetName(assetName);
 
-    renderCard(thesisEl, "Thesis", result.thesis || "No thesis returned.");
-    renderSignals(result.signals && result.signals.length ? result.signals : demoSignals);
+    renderCard(thesisEl, `Thesis · ${assetName}`, result.thesis || "No thesis returned.");
+    renderSignals(result.signals && result.signals.length ? result.signals : ["Signals not provided."]);
     renderCard(riskEl, "Risk Notes", result.risks || "Risk analysis not available.");
     renderCard(
       allocationEl,
@@ -159,15 +171,35 @@ async function runResearch({ strongPick }) {
       result.allocation || "Allocation plan not available."
     );
 
-    setStatus(data.ok ? "Research complete" : "Fallback result loaded", false);
+    setStatus("Research complete", false);
   } catch (error) {
-    const fallback = buildFallback({ market, symbol, risk, horizon, strongPick });
-    renderCard(thesisEl, "Thesis", fallback.thesis);
-    renderSignals(fallback.signals);
-    renderCard(riskEl, "Risk Notes", fallback.risks);
-    renderCard(allocationEl, "Allocation Plan", fallback.allocation);
-    setStatus("Fallback result loaded", false);
+    renderCard(thesisEl, "Thesis", "Research failed. Check the server logs or API key.");
+    renderSignals(["No signals available."]);
+    renderCard(riskEl, "Risk Notes", "No risk analysis available.");
+    renderCard(allocationEl, "Allocation Plan", "No allocation available.");
+    setAssetName("--");
+    setStatus("Research failed", false);
   }
+}
+
+function addChatMessage(role, content, { pending = false } = {}) {
+  const message = document.createElement("div");
+  message.className = `chat-message ${role}${pending ? " pending" : ""}`;
+  const p = document.createElement("p");
+  p.textContent = content;
+  message.appendChild(p);
+  chatWindow.appendChild(message);
+  chatWindow.scrollTop = chatWindow.scrollHeight;
+  return message;
+}
+
+function updateChatMessage(el, content, pending = false) {
+  const p = el.querySelector("p");
+  if (p) {
+    p.textContent = content;
+  }
+  el.classList.toggle("pending", pending);
+  chatWindow.scrollTop = chatWindow.scrollHeight;
 }
 
 form.addEventListener("submit", (event) => {
@@ -183,4 +215,33 @@ marketSelect.addEventListener("change", () => {
   loadNews(marketSelect.value);
 });
 
+chatForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const text = chatInput.value.trim();
+  if (!text) return;
+
+  const market = marketSelect.value;
+  const symbol = document.getElementById("symbol").value.trim();
+
+  chatInput.value = "";
+  chatInput.disabled = true;
+
+  addChatMessage("user", text);
+  chatHistory.push({ role: "user", content: text });
+
+  const pending = addChatMessage("assistant", "Thinking...", { pending: true });
+
+  try {
+    const reply = await requestChat(chatHistory, market, symbol);
+    updateChatMessage(pending, reply, false);
+    chatHistory.push({ role: "assistant", content: reply });
+  } catch (err) {
+    updateChatMessage(pending, "Chat failed. Check the server or API key.", false);
+  } finally {
+    chatInput.disabled = false;
+    chatInput.focus();
+  }
+});
+
+setAssetName("--");
 loadNews(marketSelect.value);
