@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>StackSkies • Market Research Agent</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="bg-grid"></div>
+    <header class="site-header">
+      <div class="brand">
+        <div class="brand-mark">SS</div>
+        <div>
+          <div class="brand-title">StackSkies</div>
+          <div class="brand-subtitle">AI Market Research Agent</div>
+        </div>
+      </div>
+      <nav class="site-nav">
+        <button class="ghost" type="button">Live Signal</button>
+        <button class="ghost" type="button">About</button>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Automated crypto + equities intelligence</p>
+          <h1>Research the latest, compare signals, and simulate an investment plan.</h1>
+          <p class="subhead">
+            StackSkies blends news scanning, on-chain or market metrics, and AI reasoning to surface a
+            strong thesis. Choose Crypto or Stockmarket, then let the agent work.
+          </p>
+          <div class="pill-row">
+            <span>Real-time ready</span>
+            <span>Explainable theses</span>
+            <span>Risk-first</span>
+          </div>
+        </div>
+        <div class="hero-card">
+          <div class="hero-card-header">
+            <span>Signal Snapshot</span>
+            <span class="status">Demo Mode</span>
+          </div>
+          <div class="hero-card-body">
+            <div class="metric">
+              <div class="label">Momentum</div>
+              <div class="value">+12.4%</div>
+            </div>
+            <div class="metric">
+              <div class="label">News Tone</div>
+              <div class="value">Bullish</div>
+            </div>
+            <div class="metric">
+              <div class="label">Risk</div>
+              <div class="value">Moderate</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Launch Research</h2>
+          <p>Provide a symbol or let the agent surface a strong candidate.</p>
+        </div>
+        <form class="panel-body" id="research-form">
+          <div class="field">
+            <label for="market">Market</label>
+            <select id="market" name="market">
+              <option value="crypto">Crypto</option>
+              <option value="stockmarket">Stockmarket</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="symbol">Symbol or Topic</label>
+            <input id="symbol" name="symbol" placeholder="BTC, ETH, NVDA, TSLA, AI sector" />
+          </div>
+          <div class="field">
+            <label for="risk">Risk Profile</label>
+            <select id="risk" name="risk">
+              <option value="conservative">Conservative</option>
+              <option value="balanced" selected>Balanced</option>
+              <option value="aggressive">Aggressive</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="horizon">Time Horizon</label>
+            <select id="horizon" name="horizon">
+              <option value="1w">1 Week</option>
+              <option value="1m" selected>1 Month</option>
+              <option value="3m">3 Months</option>
+              <option value="12m">12 Months</option>
+            </select>
+          </div>
+          <div class="field full">
+            <label>OpenRouter</label>
+            <p class="hint">The server securely uses your OpenRouter key from the environment.</p>
+          </div>
+          <div class="actions">
+            <button class="primary" type="submit">Research Now</button>
+            <button class="secondary" type="button" id="find-strong">Find Strong Pick</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="results">
+        <div class="results-header">
+          <h2>Agent Output</h2>
+          <div class="pulse" id="status">Standing by</div>
+        </div>
+        <div class="results-grid">
+          <article class="result-card" id="thesis">
+            <h3>Thesis</h3>
+            <p class="placeholder">Select a market to generate a thesis.</p>
+          </article>
+          <article class="result-card" id="signals">
+            <h3>Signals</h3>
+            <ul class="signal-list">
+              <li>News tone: --</li>
+              <li>Volume shift: --</li>
+              <li>Macro correlation: --</li>
+              <li>Liquidity: --</li>
+            </ul>
+          </article>
+          <article class="result-card" id="risk-card">
+            <h3>Risk Notes</h3>
+            <p class="placeholder">Risk sizing will appear here.</p>
+          </article>
+          <article class="result-card" id="allocation">
+            <h3>Allocation Plan</h3>
+            <p class="placeholder">Paper trade plan appears here.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="news">
+        <div class="panel-header">
+          <h2>Latest Coverage</h2>
+          <p>Wire your news APIs to replace demo headlines with real-time updates.</p>
+        </div>
+        <div class="news-grid" id="news-feed">
+          <article>
+            <h4>Macro sentiment shifts toward risk-on</h4>
+            <p>Demo headline. Connect to crypto & equities news feeds for live coverage.</p>
+          </article>
+          <article>
+            <h4>Order-book liquidity holds above 30-day average</h4>
+            <p>Demo headline. Swap in on-chain analytics or exchange data.</p>
+          </article>
+          <article>
+            <h4>Institutional inflows highlight sector rotation</h4>
+            <p>Demo headline. Replace with market news or earnings briefs.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="disclaimer">
+        <h2>Important</h2>
+        <p>
+          This interface provides research and paper-trade guidance. It does not execute trades and is
+          not financial advice. Always validate with licensed professionals before investing.
+        </p>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>StackSkies • Research-first investing assistant</p>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>
