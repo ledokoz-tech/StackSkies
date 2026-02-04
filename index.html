@@ -29,42 +29,6 @@
     </header>
 
     <main>
-      <section class="hero">
-        <div>
-          <p class="eyebrow">Automated crypto + equities intelligence</p>
-          <h1>Research the latest, compare signals, and simulate an investment plan.</h1>
-          <p class="subhead">
-            StackSkies blends news scanning, on-chain or market metrics, and AI reasoning to surface a
-            strong thesis. Choose Crypto or Stockmarket, then let the agent work.
-          </p>
-          <div class="pill-row">
-            <span>Real-time ready</span>
-            <span>Explainable theses</span>
-            <span>Risk-first</span>
-          </div>
-        </div>
-        <div class="hero-card">
-          <div class="hero-card-header">
-            <span>Research Pipeline</span>
-            <span class="status">Live API</span>
-          </div>
-          <div class="hero-card-body">
-            <div class="metric">
-              <div class="label">1. Input</div>
-              <div class="value">Market + Symbol</div>
-            </div>
-            <div class="metric">
-              <div class="label">2. Analyze</div>
-              <div class="value">News + Signals</div>
-            </div>
-            <div class="metric">
-              <div class="label">3. Output</div>
-              <div class="value">Thesis + Risk</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <section class="panel">
         <div class="panel-header">
           <h2>Launch Research</h2>
@@ -98,10 +62,6 @@
               <option value="3m">3 Months</option>
               <option value="12m">12 Months</option>
             </select>
-          </div>
-          <div class="field full">
-            <label>OpenRouter</label>
-            <p class="hint">The server securely uses your OpenRouter key from the environment.</p>
           </div>
           <div class="actions">
             <button class="primary" type="submit">Research Now</button>
@@ -142,53 +102,7 @@
           </article>
         </div>
       </section>
-
-      <section class="chat">
-        <div class="panel-header">
-          <h2>Ask the Agent</h2>
-          <p>Chat with the research model like ChatGPT. Ask for updates, risks, or comparisons.</p>
-        </div>
-        <div class="chat-window" id="chat-window">
-          <div class="chat-message assistant">
-            <p>Hi! Tell me which market or symbol you want to explore, and I will summarize the latest signals.</p>
-          </div>
-        </div>
-        <form class="chat-form" id="chat-form">
-          <input
-            id="chat-input"
-            name="chat-input"
-            placeholder="Ask about BTC, NVDA, sector momentum, or risk scenarios..."
-            autocomplete="off"
-          />
-          <button class="primary" type="submit">Send</button>
-        </form>
-      </section>
-
-      <section class="news">
-        <div class="panel-header">
-          <h2>Latest Coverage</h2>
-          <p>Live RSS coverage from crypto and stockmarket sources.</p>
-        </div>
-        <div class="news-grid" id="news-feed">
-          <article>
-            <h4>Loading live headlines...</h4>
-            <p>Fetching the latest news for the selected market.</p>
-          </article>
-        </div>
-      </section>
-
-      <section class="disclaimer">
-        <h2>Important</h2>
-        <p>
-          This interface provides research and paper-trade guidance. It does not execute trades and is
-          not financial advice. Always validate with licensed professionals before investing.
-        </p>
-      </section>
     </main>
-
-    <footer class="site-footer">
-      <p>StackSkies • Research-first investing assistant</p>
-    </footer>
 
     <script src="app.js"></script>
   </body>
